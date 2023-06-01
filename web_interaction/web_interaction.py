@@ -25,7 +25,13 @@ def start_browser():
 def go_to_page(url):
     global client
     global page_element_buffer
-
+    
+    
+    # Validate and sanitize the URL
+    if not re.match(r"^https?://", url):
+        url = "http://" + url
+    
+    
     try:
         page.goto(url=url if "://" in url else "http://" + url)
         client = page.context.new_cdp_session(page)
@@ -50,9 +56,10 @@ def scroll(direction):
 
     else:
         return "Scroll direction invalid."
+    
 
 def click(id):
-    # Inject javascript into the page which removes the target= attribute from all links
+    # Inject JavaScript into the page which removes the target= attribute from all links
     js = """
     links = document.getElementsByTagName("a");
     for (var i = 0; i < links.length; i++) {
@@ -61,22 +68,30 @@ def click(id):
     """
     page.evaluate(js)
 
-    element = page_element_buffer.get(int(id))
+    # Validate the id parameter
+    if not isinstance(id, int) or id < 0:
+        return "Invalid id parameter."
+
+    element = page_element_buffer.get(id)
     if element:
         x = element.get("center_x")
         y = element.get("center_y")
-        
+
         page.mouse.click(x, y)
     else:
-        return "Could not find element"
+        return "Could not find element."
 
     return "Successfully clicked!"
 
 def type(id, text):
-    click(int(id))
+    # Validate the id parameter
+    if not isinstance(id, int) or id < 0:
+        return "Invalid id parameter."
+
+    click(id)
     page.keyboard.type(text)
 
-    return "Typed " + text + " into " + id
+    return "Typed " + text + " into " + str(id)
 
 def enter():
     page.keyboard.press("Enter")
@@ -84,11 +99,15 @@ def enter():
     return "Pressed enter!"
 
 def type_and_enter(id, text):
-    click(int(id))
+    # Validate the id parameter
+    if not isinstance(id, int) or id < 0:
+        return "Invalid id parameter."
+
+    click(id)
     page.keyboard.type(text)
     page.keyboard.press("Enter")
 
-    return "Inputted text, and pressed enter!"
+    return "Inputted text and pressed enter!"
 
 def get_current_url():
     try:
